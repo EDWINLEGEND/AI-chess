@@ -5,7 +5,7 @@
 
 
 ## Basic Details
-### Team Name: Code Warriors
+### Team Name: Obsolete
 
 
 ### Team Members
@@ -39,6 +39,28 @@ For Hardware:
 
 ### Implementation
 For Software:
+
+# Architecture Overview
+The application follows a modern React architecture with custom components designed to eliminate user interaction:
+
+**Core Components:**
+- `SimpleChessArena.jsx` - Main game controller that prevents user input
+- `CustomChessBoard.jsx` - Custom chess board with superhero piece rendering
+- `ErrorBoundary.jsx` - Handles errors gracefully while you do nothing
+
+**Key Features Implementation:**
+- **Automatic Gameplay**: Uses `setTimeout` with 2-second intervals (1.5s animation + 0.5s pause)
+- **Piece Identity Tracking**: `pieceTracker` state maintains character identities throughout the game
+- **Smooth Animations**: CSS `@keyframes` with 1.5-second duration for piece movements
+- **Live Commentary**: Real-time move descriptions using character names
+- **Captured Pieces Display**: Shows defeated heroes with original character SVGs
+
+**Anti-User Systems:**
+- No click handlers on chess pieces (you can't interfere!)
+- AI makes moves for both Marvel and DC sides
+- Single "Start" button - your only allowed interaction
+- Game runs completely autonomously once started
+
 # Installation
 ```bash
 git clone https://github.com/your-repo/AI-chess.git
@@ -46,41 +68,80 @@ cd AI-chess
 npm install
 ```
 
-# Run
+# Development Run
 ```bash
 npm run dev
 ```
-Then open your browser and navigate to `http://localhost:5173` to start doing absolutely nothing while watching the superhero chess battle!
+
+# Live Demo
+Visit `duhchess.vercel.app` to start doing absolutely nothing while watching the superhero chess battle!
 
 ### Project Documentation
 For Software:
 
-# Screenshots (Add at least 3)
-![Game Board](Add screenshot of the main chess board with Marvel vs DC pieces)
-Main game interface showing Marvel Avengers (bottom) vs DC Justice League (top) with custom character pieces
+# Key Features Breakdown
 
-![Live Commentary](Add screenshot of the commentary section)
-Live commentary system showing character-specific move descriptions and capture notifications
+**🎮 Game Interface:**
+- **Custom Chessboard**: 8x8 grid with black/white squares and coordinate labels (a1-h8)
+- **Superhero Pieces**: 32 unique SVG characters (16 Marvel vs 16 DC)
+- **Sidebar Layout**: Left sidebar for controls, right sidebar for captured pieces and commentary
+- **Responsive Design**: Dynamic board sizing based on screen dimensions
 
-![Character Roster](Add screenshot showing captured pieces section)
-Captured pieces display showing defeated heroes with their original character identities preserved
+**🤖 AI System:**
+- **Mock Stockfish Engine**: Simulates chess AI for automated move generation
+- **Dual AI Control**: Separate AI systems for Marvel and DC sides
+- **Move Validation**: Uses Chess.js library for legal move checking
+- **Game State Management**: Tracks piece positions, captured pieces, and game status
 
-# Diagrams
-![Game Architecture](Add your game architecture diagram here)
-Game flow: React components → Chess.js logic → Mock AI → Board updates → Commentary system
+**🎬 Animation System:**
+- **Piece Movement**: Smooth 1.5-second CSS transitions between squares
+- **Knight Hopping**: Special L-shaped animation for knight moves
+- **Linear Movement**: Step-by-step animation for rooks, bishops, and queens
+- **Winner Popup**: Animated celebration with confetti effects
+
+**💬 Commentary Features:**
+- **Character Names**: Uses superhero identities in move descriptions
+- **Real-time Updates**: Live feed of game events and captures
+- **Auto-scroll**: Commentary automatically scrolls to show latest moves
+- **Capture Notifications**: Special alerts when heroes are defeated
+
+**🦸‍♂️ Character System:**
+- **Marvel Team**: Iron Man (King), Scarlet Witch (Queen), Thor & Captain Marvel (Rooks), Doctor Strange & Vision (Bishops), Black Panther & Spider-Man (Knights), 8 unique Avengers (Pawns)
+- **DC Team**: Superman (King), Wonder Woman (Queen), Green Lantern & Shazam (Rooks), Martian Manhunter & Cyborg (Bishops), Flash & Batman (Knights), 8 unique Justice League members (Pawns)
+- **Persistent Identity**: Each piece maintains its character throughout the game, even when captured
+
+# Technical Architecture
+```
+User Interface Layer
+├── App.jsx (Loading screen + Error boundary)
+├── SimpleChessArena.jsx (Main game controller)
+└── CustomChessBoard.jsx (Board rendering + animations)
+
+Game Logic Layer
+├── Chess.js library (Move validation + game rules)
+├── Mock Stockfish (AI move generation)
+└── Piece Identity Tracker (Character persistence)
+
+Styling Layer
+├── Custom CSS animations
+├── Google Fonts integration
+└── Responsive design system
+```
 
 For Hardware:
 *This is a pure software project - no hardware components required*
 
 ### Project Demo
 # Video
-[Add your demo video link showing AI vs AI gameplay here]
+duhchess.vercel.app
 Video demonstrates: Auto-playing chess game with Marvel vs DC characters, smooth piece animations, live commentary system, and captured pieces display
 
 # Additional Demos
-- Live deployment link: [Add your deployed site URL here]
-- Character roster showcase: All 32 unique superhero pieces with their special designs
-- Animation demonstrations: Piece movement animations including knight L-shaped moves and linear movements
+- **Live deployment**: `duhchess.vercel.app` - Experience the ultimate uselessness!
+- **Character roster showcase**: All 32 unique superhero pieces with their special designs
+- **Animation demonstrations**: Piece movement animations including knight L-shaped moves and linear movements
+- **Commentary system**: Real-time character-based move descriptions
+- **Automatic gameplay**: Watch AI vs AI battles without any user input required
 
 ## Team Contributions
 - Edwin Shaju Malakaran: Frontend development, React components, chess board implementation, piece animations, making sure users can't interfere with the game
