@@ -53,9 +53,9 @@ const initializePieceIdentities = () => {
     pieceIdentities['n_1'] = { svg: 'flash.svg', name: 'The Flash' }; // b8 knight
     pieceIdentities['n_6'] = { svg: 'batman.svg', name: 'Batman' }; // g8 knight
     
-    // Pawns
+    // Pawns - Batgirl, Robin, Hawkman, Zatanna, Blue Beetle, Green Arrow, Black Canary, Plastic Man
     const dcPawns = [
-      { svg: 'cyborg.svg', name: 'Cyborg' },
+      { svg: 'batman.svg', name: 'Batgirl' }, // Using batman.svg for Batgirl since we don't have batgirl.svg
       { svg: 'Robin.svg', name: 'Robin' },
       { svg: 'hawkman.svg', name: 'Hawkman' },
       { svg: 'zatanna.svg', name: 'Zatanna' },
@@ -80,7 +80,34 @@ export const getPieceIdentity = (piece, row = 0, col = 0) => {
   
   // For pieces that have multiple instances, use starting position logic
   const key = `${piece}_${col}`;
-  return pieceIdentities[key] || pieceIdentities[piece] || { svg: 'default.svg', name: 'Unknown' };
+  const identity = pieceIdentities[key];
+  
+  if (identity) {
+    return identity;
+  }
+  
+  // Fallback logic for pieces not found in specific positions
+  if (piece === 'R' || piece === 'r') {
+    // If no specific rook found, use the first rook as fallback
+    return pieceIdentities[piece === 'R' ? 'R_0' : 'r_0'] || { svg: 'default.svg', name: 'Unknown Rook' };
+  }
+  
+  if (piece === 'B' || piece === 'b') {
+    // If no specific bishop found, use the first bishop as fallback
+    return pieceIdentities[piece === 'B' ? 'B_2' : 'b_2'] || { svg: 'default.svg', name: 'Unknown Bishop' };
+  }
+  
+  if (piece === 'N' || piece === 'n') {
+    // If no specific knight found, use the first knight as fallback
+    return pieceIdentities[piece === 'N' ? 'N_1' : 'n_1'] || { svg: 'default.svg', name: 'Unknown Knight' };
+  }
+  
+  if (piece === 'P' || piece === 'p') {
+    // If no specific pawn found, use the first pawn as fallback
+    return pieceIdentities[piece === 'P' ? 'P_0' : 'p_0'] || { svg: 'default.svg', name: 'Unknown Pawn' };
+  }
+  
+  return { svg: 'default.svg', name: 'Unknown' };
 };
 
 const CustomChessBoard = ({ position, boardWidth = 500 }) => {
