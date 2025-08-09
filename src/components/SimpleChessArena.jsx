@@ -203,10 +203,12 @@ const SimpleChessArena = () => {
 
   console.log('SimpleChessArena rendering, position:', gamePosition);
 
-  // Calculate board size based on screen dimensions
+  // Calculate board size based on screen dimensions (larger without right sidebar)
   const getOptimalBoardSize = () => {
-    const minDimension = Math.min(window.innerWidth * 0.6, window.innerHeight * 0.9);
-    return Math.max(400, Math.min(700, minDimension));
+    const availableWidth = window.innerWidth - 320; // Subtract left sidebar width
+    const availableHeight = window.innerHeight - 40; // Subtract padding
+    const minDimension = Math.min(availableWidth * 0.85, availableHeight * 0.9);
+    return Math.max(500, Math.min(800, minDimension));
   };
 
   const boardSize = getOptimalBoardSize();
@@ -222,56 +224,92 @@ const SimpleChessArena = () => {
     }}>
       {/* Left Sidebar */}
       <div style={{
-        width: '300px',
+        minWidth: '320px',
+        width: '320px',
         padding: '30px 20px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)',
-        borderRight: '2px solid #444'
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%)',
+        borderRight: '3px solid #444',
+        boxShadow: '5px 0 15px rgba(0, 0, 0, 0.3)'
       }}>
         <h1 style={{ 
-          fontSize: '2.5em', 
-          marginBottom: '30px', 
+          fontSize: '2.8em', 
+          marginBottom: '40px', 
           textAlign: 'center',
-          background: 'linear-gradient(45deg, #4CAF50, #45a049)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
+          textShadow: '0 0 20px rgba(255, 215, 0, 0.3)',
+          fontWeight: 'bold'
         }}>
-          Duh! Chess
+          <span style={{
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            fontStyle: 'italic',
+            background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            letterSpacing: '2px'
+          }}>
+            Duh!
+          </span>
+          <span style={{ margin: '0 8px' }}> </span>
+          <span style={{
+            fontFamily: 'Oswald, sans-serif',
+            fontStyle: 'normal',
+            background: 'linear-gradient(45deg, #FF6347, #FF4500)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            letterSpacing: '1px',
+            fontWeight: '600'
+          }}>
+            Chess
+          </span>
         </h1>
         
         <div style={{ 
           textAlign: 'center', 
-          marginBottom: '40px',
-          padding: '20px',
-          backgroundColor: '#333',
-          borderRadius: '12px',
-          border: '1px solid #555',
-          width: '100%'
+          marginBottom: '50px',
+          padding: '25px',
+          background: 'linear-gradient(135deg, #333 0%, #444 100%)',
+          borderRadius: '15px',
+          border: '2px solid #555',
+          width: '100%',
+          boxShadow: '0 8px 25px rgba(0, 0, 0, 0.4)',
+          fontFamily: '"Clash Display Variable", "Clash Display", sans-serif'
         }}>
           <h2 style={{ 
             color: '#4CAF50', 
-            marginBottom: '15px',
-            fontSize: '1.4em'
+            marginBottom: '20px',
+            fontSize: '1.5em',
+            textShadow: '0 0 10px rgba(76, 175, 80, 0.3)',
+            fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+            fontWeight: '500'
           }}>
             {gameStatus}
           </h2>
-          <div style={{ fontSize: '1.1em', lineHeight: '1.6' }}>
+          <div style={{ 
+            fontSize: '1.2em', 
+            lineHeight: '1.8',
+            fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+            fontWeight: '400'
+          }}>
             <p><strong>Turn:</strong> {game.turn() === 'w' ? '⚪ White' : '⚫ Black'}</p>
             <p><strong>Move:</strong> #{moveCount}</p>
             <p><strong>Available:</strong> {game.moves().length} moves</p>
           </div>
           {game.isGameOver() && (
             <div style={{ 
-              marginTop: '15px',
-              padding: '10px',
-              backgroundColor: '#ff6b6b',
-              borderRadius: '6px',
+              marginTop: '20px',
+              padding: '15px',
+              background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)',
+              borderRadius: '10px',
               color: 'white',
-              fontWeight: 'bold'
+              fontWeight: '600',
+              boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
+              animation: 'pulse 2s infinite',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif'
             }}>
               {game.isCheckmate() ? '👑 Checkmate!' : 
                game.isDraw() ? '🤝 Draw!' : 
@@ -283,24 +321,46 @@ const SimpleChessArena = () => {
         <div style={{ 
           display: 'flex', 
           flexDirection: 'column', 
-          gap: '15px',
+          gap: '20px',
           width: '100%'
         }}>
           <button 
             onClick={startGame}
             disabled={isGameActive || game.isGameOver()}
+            className="animated-button"
             style={{
-              padding: '15px 20px',
-              fontSize: '18px',
-              backgroundColor: isGameActive || game.isGameOver() ? '#666' : '#4CAF50',
+              padding: '18px 25px',
+              fontSize: '19px',
+              background: isGameActive || game.isGameOver() 
+                ? 'linear-gradient(135deg, #666 0%, #555 100%)' 
+                : 'linear-gradient(135deg, #4CAF50 0%, #45a049 50%, #4CAF50 100%)',
               color: 'white',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '15px',
               cursor: isGameActive || game.isGameOver() ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-              width: '100%'
+              fontWeight: '600',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              boxShadow: isGameActive || game.isGameOver()
+                ? '0 4px 8px rgba(0, 0, 0, 0.3)'
+                : '0 8px 25px rgba(76, 175, 80, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+              width: '100%',
+              position: 'relative',
+              overflow: 'hidden',
+              backgroundSize: '200% 100%',
+              animation: isGameActive || game.isGameOver() ? 'none' : 'shimmer 3s ease-in-out infinite'
+            }}
+            onMouseEnter={(e) => {
+              if (!isGameActive && !game.isGameOver()) {
+                e.target.style.transform = 'translateY(-3px) scale(1.05)';
+                e.target.style.boxShadow = '0 12px 35px rgba(76, 175, 80, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isGameActive && !game.isGameOver()) {
+                e.target.style.transform = 'translateY(0) scale(1)';
+                e.target.style.boxShadow = '0 8px 25px rgba(76, 175, 80, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+              }
             }}
           >
             {isGameActive ? '⚡ Game Running...' : '🚀 Start Game'}
@@ -309,18 +369,39 @@ const SimpleChessArena = () => {
           <button 
             onClick={stopGame}
             disabled={!isGameActive}
+            className="animated-button"
             style={{
-              padding: '15px 20px',
-              fontSize: '18px',
-              backgroundColor: !isGameActive ? '#666' : '#f44336',
+              padding: '18px 25px',
+              fontSize: '19px',
+              background: !isGameActive 
+                ? 'linear-gradient(135deg, #666 0%, #555 100%)' 
+                : 'linear-gradient(135deg, #f44336 0%, #d32f2f 50%, #f44336 100%)',
               color: 'white',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '15px',
               cursor: !isGameActive ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-              width: '100%'
+              fontWeight: '600',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              boxShadow: !isGameActive
+                ? '0 4px 8px rgba(0, 0, 0, 0.3)'
+                : '0 8px 25px rgba(244, 67, 54, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+              width: '100%',
+              position: 'relative',
+              overflow: 'hidden',
+              backgroundSize: '200% 100%'
+            }}
+            onMouseEnter={(e) => {
+              if (isGameActive) {
+                e.target.style.transform = 'translateY(-3px) scale(1.05)';
+                e.target.style.boxShadow = '0 12px 35px rgba(244, 67, 54, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (isGameActive) {
+                e.target.style.transform = 'translateY(0) scale(1)';
+                e.target.style.boxShadow = '0 8px 25px rgba(244, 67, 54, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+              }
             }}
           >
             ⏹️ Stop Game
@@ -328,108 +409,77 @@ const SimpleChessArena = () => {
           
           <button 
             onClick={resetGame}
+            className="animated-button"
             style={{
-              padding: '15px 20px',
-              fontSize: '18px',
-              backgroundColor: '#2196F3',
+              padding: '18px 25px',
+              fontSize: '19px',
+              background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 50%, #2196F3 100%)',
               color: 'white',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '15px',
               cursor: 'pointer',
-              fontWeight: 'bold',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-              width: '100%'
+              fontWeight: '600',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              boxShadow: '0 8px 25px rgba(33, 150, 243, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+              width: '100%',
+              position: 'relative',
+              overflow: 'hidden',
+              backgroundSize: '200% 100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-3px) scale(1.05)';
+              e.target.style.boxShadow = '0 12px 35px rgba(33, 150, 243, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0) scale(1)';
+              e.target.style.boxShadow = '0 8px 25px rgba(33, 150, 243, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
             }}
           >
             🔄 Reset Game
           </button>
         </div>
+
+
       </div>
 
-      {/* Center - Chessboard */}
+      {/* Center - Larger Chessboard */}
       <div style={{
         flex: 1,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: '20px',
+        background: 'radial-gradient(circle at center, #1a1a1a 0%, #0a0a0a 100%)'
       }}>
         <div style={{
           width: `${boardSize}px`,
           height: `${boardSize}px`,
-          border: '3px solid #8b4513',
-          borderRadius: '12px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-          background: 'linear-gradient(135deg, #8b4513 0%, #a0522d 100%)',
-          padding: '8px'
+          border: '4px solid #2c1810',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          background: 'linear-gradient(135deg, #3c2414 0%, #2c1810 100%)',
+          padding: '12px',
+          position: 'relative'
         }}>
+          {/* Corner decorations */}
+          <div style={{
+            position: 'absolute',
+            top: '-2px',
+            left: '-2px',
+            right: '-2px',
+            bottom: '-2px',
+            borderRadius: '16px',
+            background: 'linear-gradient(45deg, #FFD700, transparent, #FFD700)',
+            zIndex: -1,
+            opacity: 0.3
+          }} />
+          
           <CustomChessBoard
             position={gamePosition}
-            boardWidth={boardSize - 16}
+            boardWidth={boardSize - 24}
             key={boardKey}
           />
-        </div>
-      </div>
-      
-      {/* Right Sidebar */}
-      <div style={{
-        width: '300px',
-        padding: '30px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(225deg, #1a1a1a 0%, #2a2a2a 100%)',
-        borderLeft: '2px solid #444'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          backgroundColor: '#333',
-          borderRadius: '12px',
-          border: '1px solid #555',
-          width: '100%',
-          marginBottom: '30px'
-        }}>
-          <h3 style={{ 
-            color: '#FFD700', 
-            marginBottom: '20px',
-            fontSize: '1.3em'
-          }}>
-            ✨ Game Info
-          </h3>
-          <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#ccc' }}>
-            <p>🤖 <strong>AI vs AI</strong> Chess Battle</p>
-            <p>⏱️ <strong>1.5s</strong> per move animation</p>
-            <p>🎯 <strong>Automatic</strong> gameplay</p>
-            <p>🎨 <strong>Smooth</strong> piece transitions</p>
-          </div>
-        </div>
-
-        <div style={{
-          textAlign: 'center',
-          padding: '20px',
-          backgroundColor: '#333',
-          borderRadius: '12px',
-          border: '1px solid #555',
-          width: '100%'
-        }}>
-          <h3 style={{ 
-            color: '#FF6B6B', 
-            marginBottom: '15px',
-            fontSize: '1.2em'
-          }}>
-            🎮 Controls
-          </h3>
-          <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#ddd' }}>
-            <p><strong>Start:</strong> Begin AI battle</p>
-            <p><strong>Stop:</strong> Pause the game</p>
-            <p><strong>Reset:</strong> New game setup</p>
-            <p style={{ marginTop: '15px', color: '#4CAF50' }}>
-              Sit back and enjoy the show! 🍿
-            </p>
-          </div>
         </div>
       </div>
     </div>
