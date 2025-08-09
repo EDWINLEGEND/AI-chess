@@ -5,10 +5,20 @@ const CustomChessBoard = ({ position, boardWidth = 500 }) => {
   const [displayPosition, setDisplayPosition] = useState(position);
 
   const previousPositionRef = useRef(position);
-  // Chess piece Unicode symbols
-  const pieceSymbols = {
-    'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙', // White pieces
-    'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'  // Black pieces
+  // Chess piece image mapping (SVG placeholders, replace with PNG images)
+  const pieceImages = {
+    'K': '/images/pieces/white-king.svg',
+    'Q': '/images/pieces/white-queen.svg', 
+    'R': '/images/pieces/white-rook.svg',
+    'B': '/images/pieces/white-bishop.svg',
+    'N': '/images/pieces/white-knight.svg',
+    'P': '/images/pieces/white-pawn.svg',
+    'k': '/images/pieces/black-king.svg',
+    'q': '/images/pieces/black-queen.svg',
+    'r': '/images/pieces/black-rook.svg',
+    'b': '/images/pieces/black-bishop.svg',
+    'n': '/images/pieces/black-knight.svg',
+    'p': '/images/pieces/black-pawn.svg'
   };
 
   // Parse FEN position into 8x8 board array
@@ -44,19 +54,55 @@ const CustomChessBoard = ({ position, boardWidth = 500 }) => {
       if (move) {
         console.log('✅ Move found:', move);
         
-        // Start piece animation
+        // Determine movement type and distances in pixels
+        const dxSquares = move.to.col - move.from.col;
+        const dySquares = move.to.row - move.from.row;
+        const dxPx = dxSquares * (boardWidth / 8);
+        const dyPx = dySquares * (boardWidth / 8);
+        const absDx = Math.abs(dxSquares);
+        const absDy = Math.abs(dySquares);
+
+        let animType = 'linearStep';
+        let kxPx = 0;
+        let kyPx = 0;
+        let steps = Math.max(absDx, absDy);
+        const PER_STEP_MS = 500; // slow step: 0.5s per square
+        let durationMs = Math.max(PER_STEP_MS, steps * PER_STEP_MS);
+        // Knight (L-shape)
+        if ((absDx === 2 && absDy === 1) || (absDx === 1 && absDy === 2)) {
+          animType = 'knight';
+          // First leg: the longer axis
+          if (absDx > absDy) {
+            kxPx = (dxSquares > 0 ? 2 : -2) * (boardWidth / 8);
+            kyPx = 0;
+          } else {
+            kxPx = 0;
+            kyPx = (dySquares > 0 ? 2 : -2) * (boardWidth / 8);
+          }
+          steps = 2;
+          durationMs = steps * PER_STEP_MS;
+        }
+
+        // Start piece animation with movement variables
         setAnimatingPieces([{
           piece: move.piece,
           from: move.from,
           to: move.to,
-          id: Date.now()
+          id: Date.now(),
+          animType,
+          dxPx,
+          dyPx,
+          kxPx,
+          kyPx,
+          steps,
+          durationMs
         }]);
 
         // Clear everything after animation
         setTimeout(() => {
           setDisplayPosition(position);
           setAnimatingPieces([]);
-        }, 1500);
+        }, durationMs);
       } else {
         // No move detected, just update position
         setDisplayPosition(position);
@@ -144,6 +190,15 @@ const CustomChessBoard = ({ position, boardWidth = 500 }) => {
     return (row + col) % 2 === 0 ? '#ffffff' : '#000000';
   };
 
+  // Unicode fallback for when images don't load
+  const getUnicodeSymbol = (piece) => {
+    const symbols = {
+      'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙',
+      'k': '♚', 'q': '♛', 'r': '♜', 'b': '♝', 'n': '♞', 'p': '♟'
+    };
+    return symbols[piece] || piece;
+  };
+
 
 
   return (
@@ -181,7 +236,33 @@ const CustomChessBoard = ({ position, boardWidth = 500 }) => {
                             position: 'relative'
                           }}
                         >
-              {piece && !isAnimating && pieceSymbols[piece]}
+                                        {piece && !isAnimating && (
+                            <img 
+                              src={pieceImages[piece]} 
+                              alt={piece}
+                              style={{
+                                width: '80%',
+                                height: '80%',
+                                objectFit: 'contain',
+                                userSelect: 'none',
+                                pointerEvents: 'none'
+                              }}
+                              onError={(e) => {
+                                // Fallback to Unicode if image fails to load
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'block';
+                              }}
+                            />
+                          )}
+                          {piece && !isAnimating && (
+                            <span style={{ 
+                              display: 'none', 
+                              fontSize: squareSize * 0.7,
+                              userSelect: 'none'
+                            }}>
+                              {getUnicodeSymbol(piece)}
+                            </span>
+                          )}
                                         {/* Add coordinate labels */}
                           {rowIndex === 7 && (
                             <div style={{
@@ -230,12 +311,30 @@ const CustomChessBoard = ({ position, boardWidth = 500 }) => {
             fontSize: squareSize * 0.7,
             userSelect: 'none',
             zIndex: 10,
-            transition: 'all 1.5s ease-in-out',
-            transform: `translate(${(animPiece.to.col - animPiece.from.col) * squareSize}px, ${(animPiece.to.row - animPiece.from.row) * squareSize}px)`,
+            // Provide CSS variables for keyframe animations
+            ['--dx']: `${animPiece.dxPx}px`,
+            ['--dy']: `${animPiece.dyPx}px`,
+            ['--kx']: `${animPiece.kxPx}px`,
+            ['--ky']: `${animPiece.kyPx}px`,
+            animation: `${animPiece.animType === 'knight' ? 'moveKnight' : 'moveLinearStep'} ${animPiece.durationMs}ms steps(${Math.max(1, animPiece.steps)}, end) forwards`,
             pointerEvents: 'none'
           }}
         >
-          {pieceSymbols[animPiece.piece]}
+                                <img 
+                        src={pieceImages[animPiece.piece]} 
+                        alt={animPiece.piece}
+                        style={{
+                          width: '80%',
+                          height: '80%',
+                          objectFit: 'contain',
+                          userSelect: 'none',
+                          pointerEvents: 'none'
+                        }}
+                        onError={(e) => {
+                          // Fallback to Unicode for animated pieces
+                          e.target.outerHTML = `<span style="font-size: ${squareSize * 0.7}px; user-select: none;">${getUnicodeSymbol(animPiece.piece)}</span>`;
+                        }}
+                      />
         </div>
       ))}
     </div>

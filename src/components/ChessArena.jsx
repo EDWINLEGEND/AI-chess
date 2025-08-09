@@ -12,6 +12,12 @@ const ChessArena = () => {
   const [gameStatus, setGameStatus] = useState('Click Start to begin AI vs AI game');
   const [currentPlayer, setCurrentPlayer] = useState('White');
   const [moveHistory, setMoveHistory] = useState([]);
+  // Move highlight squares in algebraic notation, e.g., 'e2' and 'e4'
+  const [highlightFrom, setHighlightFrom] = useState(null);
+  const [highlightTo, setHighlightTo] = useState(null);
+
+  // Keep animation duration in sync with highlight lifecycle
+  const MOVE_ANIMATION_MS = 1500;
   
   const whiteEngineRef = useRef(null);
   const blackEngineRef = useRef(null);
@@ -155,6 +161,17 @@ const ChessArena = () => {
         console.log(`Move successful! ${moveObject.san}`);
         // Play sound effect
         playSound(moveObject.captured ? 'capture' : 'move');
+        // Set highlights for the moving piece during animation
+        try {
+          // chess.js moveObject has `from` and `to` squares like 'e2', 'e4'
+          setHighlightFrom(moveObject.from);
+          setHighlightTo(moveObject.to);
+          // Clear after animation completes
+          setTimeout(() => {
+            setHighlightFrom(null);
+            setHighlightTo(null);
+          }, MOVE_ANIMATION_MS);
+        } catch (_) {}
         
         // Update game state
         setGamePosition(currentGame.fen());
@@ -258,9 +275,23 @@ const ChessArena = () => {
           position={gamePosition}
           arePiecesDraggable={false}
           boardWidth={600}
-          animationDuration={500}
+          animationDuration={MOVE_ANIMATION_MS}
           customBoardStyle={{
             borderRadius: '8px',
+          }}
+          customSquareStyles={{
+            ...(highlightFrom ? {
+              [highlightFrom]: {
+                boxShadow: '0 0 0 4px rgba(255, 215, 0, 0.6), 0 0 18px 6px rgba(255, 215, 0, 0.6)',
+                animation: 'squarePulseGold 1.5s ease-in-out',
+              }
+            } : {}),
+            ...(highlightTo ? {
+              [highlightTo]: {
+                boxShadow: '0 0 0 4px rgba(0, 255, 128, 0.6), 0 0 18px 6px rgba(0, 255, 128, 0.6)',
+                animation: 'squarePulseGreen 1.5s ease-in-out',
+              }
+            } : {})
           }}
         />
       </div>

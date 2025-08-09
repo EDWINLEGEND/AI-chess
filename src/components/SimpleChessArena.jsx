@@ -9,6 +9,10 @@ const SimpleChessArena = () => {
   const [moveCount, setMoveCount] = useState(0);
   const [isGameActive, setIsGameActive] = useState(false);
   const [gameStatus, setGameStatus] = useState('Ready to start');
+  const [capturedWhite, setCapturedWhite] = useState([]); // black captured white pieces
+  const [capturedBlack, setCapturedBlack] = useState([]); // white captured black pieces
+  const [showWinnerPopup, setShowWinnerPopup] = useState(false);
+  const [winnerInfo, setWinnerInfo] = useState({ winner: '', reason: '', isDraw: false });
   
   const gameRef = useRef(game);
   const timeoutRef = useRef(null);
@@ -71,6 +75,16 @@ const SimpleChessArena = () => {
       console.log('Move result:', moveResult);
       
       if (moveResult) {
+        // Track captured pieces to display on the right side
+        if (moveResult.captured) {
+          const capturedCode = moveResult.captured; // p,r,n,b,q,k (lowercase from chess.js)
+          if (moveResult.color === 'w') {
+            // white moved; captured black piece
+            setCapturedBlack(prev => [...prev, capturedCode]);
+          } else {
+            setCapturedWhite(prev => [...prev, capturedCode.toUpperCase()]);
+          }
+        }
         const newPosition = newGame.fen();
         const currentTurn = newGame.turn() === 'w' ? 'White' : 'Black';
         
@@ -92,20 +106,42 @@ const SimpleChessArena = () => {
         if (newGame.isGameOver()) {
           console.log('Game is now over after move');
           let endStatus = 'Game Over - ';
+          let winner = '';
+          let reason = '';
+          let isDraw = false;
+          
           if (newGame.isCheckmate()) {
-            const winner = newGame.turn() === 'w' ? 'Black' : 'White';
+            winner = newGame.turn() === 'w' ? 'Black' : 'White';
+            reason = 'Checkmate';
             endStatus += `${winner} wins by checkmate!`;
           } else if (newGame.isDraw()) {
+            isDraw = true;
+            reason = 'Draw';
             endStatus += 'Draw!';
           } else if (newGame.isStalemate()) {
+            isDraw = true;
+            reason = 'Stalemate';
             endStatus += 'Stalemate!';
           } else if (newGame.isThreefoldRepetition()) {
+            isDraw = true;
+            reason = 'Threefold Repetition';
             endStatus += 'Draw by threefold repetition!';
           } else if (newGame.isInsufficientMaterial()) {
+            isDraw = true;
+            reason = 'Insufficient Material';
             endStatus += 'Draw by insufficient material!';
           }
+          
           setGameStatus(endStatus);
           setIsGameActive(false);
+          shouldContinueRef.current = false;
+          
+          // Show winner popup with animation delay
+          setTimeout(() => {
+            setWinnerInfo({ winner, reason, isDraw });
+            setShowWinnerPopup(true);
+          }, 1000); // Show popup 1 second after game ends
+          
           console.log('Game ended with status:', endStatus);
           return;
         }
@@ -191,6 +227,10 @@ const SimpleChessArena = () => {
     setMoveCount(0);
     setBoardKey(prev => prev + 1);
     setGameStatus('Ready to start');
+    setCapturedWhite([]);
+    setCapturedBlack([]);
+    setShowWinnerPopup(false);
+    setWinnerInfo({ winner: '', reason: '', isDraw: false });
     
     console.log('Reset to starting position:', startPosition);
   };
@@ -482,6 +522,217 @@ const SimpleChessArena = () => {
           />
         </div>
       </div>
+
+      {/* Right Sidebar - Captured pieces */}
+      <div style={{
+        width: '260px',
+        padding: '20px',
+        borderLeft: '3px solid #444',
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <div>
+          <h3 style={{margin: 0, marginBottom: '8px'}}>Captured by White</h3>
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+            {capturedBlack.map((p, idx) => (
+              <div key={`cb-${idx}`} style={{
+                width: '32px', height: '32px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#111', border: '1px solid #333', borderRadius: '6px'
+              }}>
+                <span style={{fontSize: '22px'}}>{p === 'p' ? '♟' : p === 'r' ? '♜' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'q' ? '♛' : '♚'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{margin: 0, marginBottom: '8px'}}>Captured by Black</h3>
+          <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+            {capturedWhite.map((p, idx) => (
+              <div key={`cw-${idx}`} style={{
+                width: '32px', height: '32px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#111', border: '1px solid #333', borderRadius: '6px'
+              }}>
+                <span style={{fontSize: '22px', color: '#fff'}}>{p === 'P' ? '♙' : p === 'R' ? '♖' : p === 'N' ? '♘' : p === 'B' ? '♗' : p === 'Q' ? '♕' : '♔'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Winner Popup */}
+      {showWinnerPopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          animation: 'fadeIn 0.5s ease-out'
+        }}>
+          <div style={{
+            background: winnerInfo.isDraw 
+              ? 'linear-gradient(135deg, #4a5568 0%, #2d3748 50%, #1a202c 100%)'
+              : winnerInfo.winner === 'White'
+                ? 'linear-gradient(135deg, #f7fafc 0%, #edf2f7 50%, #e2e8f0 100%)'
+                : 'linear-gradient(135deg, #2d3748 0%, #1a202c 50%, #000000 100%)',
+            color: winnerInfo.isDraw 
+              ? '#ffffff'
+              : winnerInfo.winner === 'White'
+                ? '#000000'
+                : '#ffffff',
+            padding: '60px 80px',
+            borderRadius: '24px',
+            textAlign: 'center',
+            boxShadow: '0 25px 80px rgba(0, 0, 0, 0.6), 0 0 0 3px rgba(255, 215, 0, 0.3)',
+            animation: 'popupSlideIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            maxWidth: '500px',
+            position: 'relative',
+            overflow: 'hidden',
+            border: winnerInfo.isDraw 
+              ? '2px solid #718096'
+              : winnerInfo.winner === 'White'
+                ? '2px solid #000000'
+                : '2px solid #ffffff'
+          }}>
+            {/* Confetti animation background */}
+            {!winnerInfo.isDraw && (
+              <div style={{
+                position: 'absolute',
+                top: '-100%',
+                left: '-50%',
+                right: '-50%',
+                bottom: '-100%',
+                background: `
+                  radial-gradient(circle at 20% 80%, ${winnerInfo.winner === 'White' ? '#FFD700' : '#C0C0C0'} 2px, transparent 2px),
+                  radial-gradient(circle at 80% 20%, ${winnerInfo.winner === 'White' ? '#FFA500' : '#708090'} 2px, transparent 2px),
+                  radial-gradient(circle at 40% 40%, ${winnerInfo.winner === 'White' ? '#FF6347' : '#4682B4'} 2px, transparent 2px)
+                `,
+                backgroundSize: '50px 50px, 30px 30px, 40px 40px',
+                animation: 'confetti 2s linear infinite',
+                opacity: 0.3,
+                zIndex: -1
+              }} />
+            )}
+            
+            <div style={{
+              fontSize: '4em',
+              marginBottom: '20px',
+              animation: 'bounce 1s ease-in-out infinite alternate'
+            }}>
+              {winnerInfo.isDraw 
+                ? '🤝' 
+                : winnerInfo.winner === 'White' 
+                  ? '👑'
+                  : '♛'
+              }
+            </div>
+            
+            <h1 style={{
+              fontSize: '3em',
+              margin: '0 0 15px 0',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              fontWeight: '700',
+              textShadow: winnerInfo.isDraw 
+                ? '2px 2px 4px rgba(0, 0, 0, 0.5)'
+                : winnerInfo.winner === 'White'
+                  ? '2px 2px 4px rgba(0, 0, 0, 0.3)'
+                  : '2px 2px 4px rgba(255, 255, 255, 0.3)',
+              animation: 'glow 2s ease-in-out infinite alternate'
+            }}>
+              {winnerInfo.isDraw ? 'DRAW!' : `${winnerInfo.winner.toUpperCase()} WINS!`}
+            </h1>
+            
+            <p style={{
+              fontSize: '1.5em',
+              margin: '0 0 40px 0',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              fontWeight: '400',
+              opacity: 0.9
+            }}>
+              {winnerInfo.reason}
+            </p>
+            
+            <div style={{
+              display: 'flex',
+              gap: '20px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={() => setShowWinnerPopup(false)}
+                className="animated-button"
+                style={{
+                  padding: '15px 30px',
+                  fontSize: '18px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 25px rgba(102, 126, 234, 0.4)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px) scale(1.05)';
+                  e.target.style.boxShadow = '0 12px 35px rgba(102, 126, 234, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0) scale(1)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
+                }}
+              >
+                Close
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowWinnerPopup(false);
+                  resetGame();
+                }}
+                className="animated-button"
+                style={{
+                  padding: '15px 30px',
+                  fontSize: '18px',
+                  background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 8px 25px rgba(76, 175, 80, 0.4)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.transform = 'translateY(-2px) scale(1.05)';
+                  e.target.style.boxShadow = '0 12px 35px rgba(76, 175, 80, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.transform = 'translateY(0) scale(1)';
+                  e.target.style.boxShadow = '0 8px 25px rgba(76, 175, 80, 0.4)';
+                }}
+              >
+                Play Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
