@@ -1,24 +1,97 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+// Global piece identity storage
+let pieceIdentities = null;
+
+const initializePieceIdentities = () => {
+  if (!pieceIdentities) {
+    pieceIdentities = {};
+    // Initialize Marvel pieces (uppercase)
+    pieceIdentities['K'] = { svg: 'ironman.svg', name: 'Iron Man' };
+    pieceIdentities['Q'] = { svg: 'wanda.svg', name: 'Scarlet Witch' };
+    
+    // Rooks
+    pieceIdentities['R_0'] = { svg: 'thor.svg', name: 'Thor' }; // Left rook
+    pieceIdentities['R_7'] = { svg: 'capmarvel.svg', name: 'Captain Marvel' }; // Right rook
+    
+    // Bishops (c1=col2, f1=col5)
+    pieceIdentities['B_2'] = { svg: 'strange.svg', name: 'Doctor Strange' }; // c1 bishop
+    pieceIdentities['B_5'] = { svg: 'vision.svg', name: 'Vision' }; // f1 bishop
+    
+    // Knights (b1=col1, g1=col6)
+    pieceIdentities['N_1'] = { svg: 'blackp.svg', name: 'Black Panther' }; // b1 knight
+    pieceIdentities['N_6'] = { svg: 'spiderman.svg', name: 'Spider-Man' }; // g1 knight
+    
+    // Pawns
+    const marvelPawns = [
+      { svg: 'hawkeye.svg', name: 'Hawkeye' },
+      { svg: 'blackwidow.svg', name: 'Black Widow' },
+      { svg: 'falcon.svg', name: 'Falcon' },
+      { svg: 'antman.svg', name: 'Ant-Man' },
+      { svg: 'warmachine.svg', name: 'War Machine' },
+      { svg: 'wintersol.svg', name: 'Winter Soldier' },
+      { svg: 'wasp.svg', name: 'Wasp' },
+      { svg: 'starlord.svg', name: 'Star-Lord' }
+    ];
+    for (let i = 0; i < 8; i++) {
+      pieceIdentities[`P_${i}`] = marvelPawns[i];
+    }
+    
+    // Initialize DC pieces (lowercase)
+    pieceIdentities['k'] = { svg: 'superman.svg', name: 'Superman' };
+    pieceIdentities['q'] = { svg: 'wonder.svg', name: 'Wonder Woman' };
+    
+    // Rooks
+    pieceIdentities['r_0'] = { svg: 'green.svg', name: 'Green Lantern' };
+    pieceIdentities['r_7'] = { svg: 'shazam.svg', name: 'Shazam' };
+    
+    // Bishops (c8=col2, f8=col5)
+    pieceIdentities['b_2'] = { svg: 'martian.svg', name: 'Martian Manhunter' }; // c8 bishop
+    pieceIdentities['b_5'] = { svg: 'cyborg.svg', name: 'Cyborg' }; // f8 bishop
+    
+    // Knights (b8=col1, g8=col6)
+    pieceIdentities['n_1'] = { svg: 'flash.svg', name: 'The Flash' }; // b8 knight
+    pieceIdentities['n_6'] = { svg: 'batman.svg', name: 'Batman' }; // g8 knight
+    
+    // Pawns
+    const dcPawns = [
+      { svg: 'cyborg.svg', name: 'Cyborg' },
+      { svg: 'Robin.svg', name: 'Robin' },
+      { svg: 'hawkman.svg', name: 'Hawkman' },
+      { svg: 'zatanna.svg', name: 'Zatanna' },
+      { svg: 'blue.svg', name: 'Blue Beetle' },
+      { svg: 'arrow.svg', name: 'Green Arrow' },
+      { svg: 'blackcanary.svg', name: 'Black Canary' },
+      { svg: 'plastic man.svg', name: 'Plastic Man' }
+    ];
+    for (let i = 0; i < 8; i++) {
+      pieceIdentities[`p_${i}`] = dcPawns[i];
+    }
+  }
+};
+
+export const getPieceIdentity = (piece, row = 0, col = 0) => {
+  initializePieceIdentities();
+  
+  // For unique pieces (K, Q, k, q), return directly
+  if (['K', 'Q', 'k', 'q'].includes(piece)) {
+    return pieceIdentities[piece];
+  }
+  
+  // For pieces that have multiple instances, use starting position logic
+  const key = `${piece}_${col}`;
+  return pieceIdentities[key] || pieceIdentities[piece] || { svg: 'default.svg', name: 'Unknown' };
+};
+
 const CustomChessBoard = ({ position, boardWidth = 500 }) => {
   const [animatingPieces, setAnimatingPieces] = useState([]);
   const [displayPosition, setDisplayPosition] = useState(position);
 
   const previousPositionRef = useRef(position);
-  // Chess piece image mapping (SVG placeholders, replace with PNG images)
-  const pieceImages = {
-    'K': '/images/pieces/white-king.svg',
-    'Q': '/images/pieces/white-queen.svg', 
-    'R': '/images/pieces/white-rook.svg',
-    'B': '/images/pieces/white-bishop.svg',
-    'N': '/images/pieces/white-knight.svg',
-    'P': '/images/pieces/white-pawn.svg',
-    'k': '/images/pieces/black-king.svg',
-    'q': '/images/pieces/black-queen.svg',
-    'r': '/images/pieces/black-rook.svg',
-    'b': '/images/pieces/black-bishop.svg',
-    'n': '/images/pieces/black-knight.svg',
-    'p': '/images/pieces/black-pawn.svg'
+
+  const getPieceImage = (piece, row = 0, col = 0) => {
+    const identity = getPieceIdentity(piece, row, col);
+    return `/images/pieces/${identity.svg}`;
   };
 
   // Parse FEN position into 8x8 board array
@@ -238,7 +311,7 @@ const CustomChessBoard = ({ position, boardWidth = 500 }) => {
                         >
                                         {piece && !isAnimating && (
                             <img 
-                              src={pieceImages[piece]} 
+                              src={getPieceImage(piece, rowIndex, colIndex)} 
                               alt={piece}
                               style={{
                                 width: '80%',
@@ -320,9 +393,14 @@ const CustomChessBoard = ({ position, boardWidth = 500 }) => {
             pointerEvents: 'none'
           }}
         >
-                                <img 
-                        src={pieceImages[animPiece.piece]} 
-                        alt={animPiece.piece}
+                                                            <img 
+                            src={(() => {
+                              const squareSize = boardWidth / 8;
+                              const fromRow = Math.floor(animPiece.fromY / squareSize);
+                              const fromCol = Math.floor(animPiece.fromX / squareSize);
+                              return getPieceImage(animPiece.piece, fromRow, fromCol);
+                            })()} 
+                            alt={animPiece.piece}
                         style={{
                           width: '80%',
                           height: '80%',

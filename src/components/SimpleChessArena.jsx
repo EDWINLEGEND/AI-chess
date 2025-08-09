@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Chess } from 'chess.js';
-import CustomChessBoard from './CustomChessBoard';
+import CustomChessBoard, { getPieceIdentity } from './CustomChessBoard';
 
 const SimpleChessArena = () => {
   const [game, setGame] = useState(() => new Chess());
@@ -27,18 +27,26 @@ const SimpleChessArena = () => {
   const shouldContinueRef = useRef(false);
   const commentaryRef = useRef(null);
 
-  // Helper function to get piece name with SVG
-  const getPieceName = (piece) => {
-    const pieceNames = {
-      'K': 'King', 'Q': 'Queen', 'R': 'Rook', 'B': 'Bishop', 'N': 'Knight', 'P': 'Pawn',
-      'k': 'King', 'q': 'Queen', 'r': 'Rook', 'b': 'Bishop', 'n': 'Knight', 'p': 'Pawn'
-    };
-    const color = piece === piece.toUpperCase() ? 'white' : 'black';
-    const team = piece === piece.toUpperCase() ? 'Marvel' : 'DC';
-    const pieceName = pieceNames[piece.toUpperCase()];
-    const svgPath = `/images/pieces/${color}-${pieceName.toLowerCase()}.svg`;
+  // Helper function to get piece name with SVG using starting position
+  const getPieceName = (piece, fromSquare = null) => {
+    const isMarvel = piece === piece.toUpperCase();
+    const team = isMarvel ? 'Marvel' : 'DC';
     
-    return { name: pieceName, color, team, svgPath, piece };
+    // Convert chess square notation (like 'e1') to row/col for identity lookup
+    let col = 0;
+    if (fromSquare) {
+      col = fromSquare.charCodeAt(0) - 97; // 'a' = 0, 'b' = 1, etc.
+    }
+    
+    // Get the specific identity for this piece
+    const identity = getPieceIdentity(piece, 0, col);
+    
+    return { 
+      name: identity.name, 
+      team, 
+      svgPath: `/images/pieces/${identity.svg}`, 
+      piece 
+    };
   };
 
   // Helper function to convert square notation (like 'e4') to readable position
@@ -121,7 +129,7 @@ const SimpleChessArena = () => {
       
       if (moveResult) {
         // Create commentary for the move
-        const movingPiece = getPieceName(moveResult.piece);
+        const movingPiece = getPieceName(moveResult.piece, moveResult.from);
         const playerName = moveResult.color === 'w' ? 'Marvel' : 'DC';
         const fromSquare = getSquareName(moveResult.from);
         const toSquare = getSquareName(moveResult.to);
@@ -129,16 +137,20 @@ const SimpleChessArena = () => {
         let commentaryMessage = '';
         
         if (moveResult.captured) {
-          const capturedPiece = getPieceName(moveResult.captured);
+          const capturedPiece = getPieceName(moveResult.captured, moveResult.to);
           commentaryMessage = `${movingPiece.name} from ${fromSquare} captures ${capturedPiece.name} on ${toSquare}! 💥`;
           
-          // Track captured pieces to display on the right side
-          const capturedCode = moveResult.captured; // p,r,n,b,q,k (lowercase from chess.js)
+          // Track captured pieces with their identity information
+          const capturedPieceInfo = {
+            piece: moveResult.captured,
+            identity: getPieceIdentity(moveResult.captured, 0, moveResult.to.charCodeAt(0) - 97)
+          };
+          
           if (moveResult.color === 'w') {
             // Marvel moved; captured DC piece
-            setCapturedDC(prev => [...prev, capturedCode]);
+            setCapturedDC(prev => [...prev, capturedPieceInfo]);
           } else {
-            setCapturedMarvel(prev => [...prev, capturedCode.toUpperCase()]);
+            setCapturedMarvel(prev => [...prev, capturedPieceInfo]);
           }
         } else {
           commentaryMessage = `${movingPiece.name} moves from ${fromSquare} to ${toSquare}`;
@@ -149,7 +161,7 @@ const SimpleChessArena = () => {
           } else if (moveResult.flags.includes('e')) {
             commentaryMessage += ' (En passant!) ⚡';
           } else if (moveResult.promotion) {
-            commentaryMessage += ` (Promoted to ${getPieceName(moveResult.promotion).name}!) 👑`;
+            commentaryMessage += ` (Promoted to ${getPieceName(moveResult.promotion, moveResult.to).name}!) 👑`;
           }
         }
         
@@ -648,7 +660,7 @@ const SimpleChessArena = () => {
               By Marvel (You)
             </h4>
             <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px'}}>
-              {capturedDC.map((p, idx) => (
+              {capturedDC.map((capturedInfo, idx) => (
                 <div key={`cb-${idx}`} style={{
                   width: '28px', height: '28px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -657,7 +669,20 @@ const SimpleChessArena = () => {
                   borderRadius: '6px',
                   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
                 }}>
-                  <span style={{fontSize: '18px'}}>{p === 'p' ? '♟' : p === 'r' ? '♜' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'q' ? '♛' : '♚'}</span>
+                  <img 
+                    src={`/images/pieces/${capturedInfo.identity.svg}`}
+                    alt={`DC ${capturedInfo.identity.name}`}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      objectFit: 'contain'
+                    }}
+                    onError={(e) => {
+                      // Fallback to Unicode if image fails to load
+                      const p = capturedInfo.piece;
+                      e.target.outerHTML = `<span style="font-size: 18px">${p === 'p' ? '♟' : p === 'r' ? '♜' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'q' ? '♛' : '♚'}</span>`;
+                    }}
+                  />
                 </div>
               ))}
             </div>
@@ -674,7 +699,7 @@ const SimpleChessArena = () => {
               By DC (Opponent)
             </h4>
             <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px'}}>
-              {capturedMarvel.map((p, idx) => (
+              {capturedMarvel.map((capturedInfo, idx) => (
                 <div key={`cw-${idx}`} style={{
                   width: '28px', height: '28px',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -683,7 +708,20 @@ const SimpleChessArena = () => {
                   borderRadius: '6px',
                   boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
                 }}>
-                  <span style={{fontSize: '18px', color: '#fff'}}>{p === 'P' ? '♙' : p === 'R' ? '♖' : p === 'N' ? '♘' : p === 'B' ? '♗' : p === 'Q' ? '♕' : '♔'}</span>
+                  <img 
+                    src={`/images/pieces/${capturedInfo.identity.svg}`}
+                    alt={`Marvel ${capturedInfo.identity.name}`}
+                    style={{
+                      width: '20px',
+                      height: '20px',
+                      objectFit: 'contain'
+                    }}
+                    onError={(e) => {
+                      // Fallback to Unicode if image fails to load
+                      const p = capturedInfo.piece;
+                      e.target.outerHTML = `<span style="font-size: 18px; color: #fff">${p === 'P' ? '♙' : p === 'R' ? '♖' : p === 'N' ? '♘' : p === 'B' ? '♗' : p === 'Q' ? '♕' : '♔'}</span>`;
+                    }}
+                  />
                 </div>
               ))}
             </div>
