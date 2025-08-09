@@ -10,7 +10,7 @@ const ChessArena = () => {
   const [gamePosition, setGamePosition] = useState(game.fen());
   const [isGameActive, setIsGameActive] = useState(false);
   const [gameStatus, setGameStatus] = useState('Click Start to begin AI vs AI game');
-  const [currentPlayer, setCurrentPlayer] = useState('White');
+  const [currentPlayer, setCurrentPlayer] = useState('Marvel');
   const [moveHistory, setMoveHistory] = useState([]);
   // Move highlight squares in algebraic notation, e.g., 'e2' and 'e4'
   const [highlightFrom, setHighlightFrom] = useState(null);
@@ -19,8 +19,8 @@ const ChessArena = () => {
   // Keep animation duration in sync with highlight lifecycle
   const MOVE_ANIMATION_MS = 1500;
   
-  const whiteEngineRef = useRef(null);
-  const blackEngineRef = useRef(null);
+  const marvelEngineRef = useRef(null);
+  const dcEngineRef = useRef(null);
   const gameRef = useRef(game);
   
   // Audio context for sound effects
@@ -70,35 +70,35 @@ const ChessArena = () => {
       try {
         console.log('Creating workers...');
         // Create workers for both engines
-        whiteEngineRef.current = new Worker('/engine/stockfish.js');
-        blackEngineRef.current = new Worker('/engine/stockfish.js');
+        marvelEngineRef.current = new Worker('/engine/stockfish.js');
+        dcEngineRef.current = new Worker('/engine/stockfish.js');
 
         console.log('Setting up message handlers...');
-        // Setup white engine
-        whiteEngineRef.current.onmessage = (event) => {
-          handleEngineMessage(event.data, 'white');
+        // Setup Marvel engine
+        marvelEngineRef.current.onmessage = (event) => {
+          handleEngineMessage(event.data, 'marvel');
         };
 
-        // Setup black engine
-        blackEngineRef.current.onmessage = (event) => {
-          handleEngineMessage(event.data, 'black');
+        // Setup DC engine
+        dcEngineRef.current.onmessage = (event) => {
+          handleEngineMessage(event.data, 'dc');
         };
 
         // Setup error handlers
-        whiteEngineRef.current.onerror = (error) => {
-          console.error('White engine error:', error);
-          setGameStatus('White engine failed to load. Please refresh.');
+        marvelEngineRef.current.onerror = (error) => {
+          console.error('Marvel engine error:', error);
+          setGameStatus('Marvel engine failed to load. Please refresh.');
         };
 
-        blackEngineRef.current.onerror = (error) => {
-          console.error('Black engine error:', error);
-          setGameStatus('Black engine failed to load. Please refresh.');
+        dcEngineRef.current.onerror = (error) => {
+          console.error('DC engine error:', error);
+          setGameStatus('DC engine failed to load. Please refresh.');
         };
 
         console.log('Initializing engines with UCI...');
         // Initialize engines
-        whiteEngineRef.current.postMessage('uci');
-        blackEngineRef.current.postMessage('uci');
+        marvelEngineRef.current.postMessage('uci');
+        dcEngineRef.current.postMessage('uci');
         
         setGameStatus('Engines loaded! Click Start to begin');
         console.log('Engines initialized successfully');
@@ -113,8 +113,8 @@ const ChessArena = () => {
     // Cleanup
     return () => {
       console.log('Cleaning up engines...');
-      if (whiteEngineRef.current) whiteEngineRef.current.terminate();
-      if (blackEngineRef.current) blackEngineRef.current.terminate();
+      if (marvelEngineRef.current) marvelEngineRef.current.terminate();
+      if (dcEngineRef.current) dcEngineRef.current.terminate();
     };
   }, [handleEngineMessage]);
 
@@ -143,11 +143,11 @@ const ChessArena = () => {
     }
 
     // Check if it's the right engine's turn
-    const isWhiteTurn = currentGame.turn() === 'w';
-    const expectedEngine = isWhiteTurn ? 'white' : 'black';
-    console.log(`Current turn: ${isWhiteTurn ? 'White' : 'Black'}, Engine: ${engine}, Expected: ${expectedEngine}`);
+    const isMarvelTurn = currentGame.turn() === 'w';
+    const expectedEngine = isMarvelTurn ? 'marvel' : 'dc';
+    console.log(`Current turn: ${isMarvelTurn ? 'Marvel' : 'DC'}, Engine: ${engine}, Expected: ${expectedEngine}`);
     
-    if ((isWhiteTurn && engine !== 'white') || (!isWhiteTurn && engine !== 'black')) {
+    if ((isMarvelTurn && engine !== 'marvel') || (!isMarvelTurn && engine !== 'dc')) {
       console.log('Rejecting move: wrong engine turn');
       return;
     }
@@ -175,14 +175,14 @@ const ChessArena = () => {
         
         // Update game state
         setGamePosition(currentGame.fen());
-        setCurrentPlayer(currentGame.turn() === 'w' ? 'White' : 'Black');
+        setCurrentPlayer(currentGame.turn() === 'w' ? 'Marvel' : 'DC');
         setMoveHistory(prev => [...prev, moveObject]);
         
         // Check if game is over
         if (currentGame.isGameOver()) {
           let status = 'Game Over - ';
           if (currentGame.isCheckmate()) {
-            status += `${currentGame.turn() === 'w' ? 'Black' : 'White'} wins by checkmate!`;
+            status += `${currentGame.turn() === 'w' ? 'DC' : 'Marvel'} wins by checkmate!`;
           } else if (currentGame.isDraw()) {
             status += 'Draw!';
           }
@@ -212,9 +212,9 @@ const ChessArena = () => {
   // Request move from current engine
   const requestEngineMove = useCallback(() => {
     const currentGame = gameRef.current;
-    const isWhiteTurn = currentGame.turn() === 'w';
-    const engine = isWhiteTurn ? whiteEngineRef.current : blackEngineRef.current;
-    const playerName = isWhiteTurn ? 'White' : 'Black';
+    const isMarvelTurn = currentGame.turn() === 'w';
+    const engine = isMarvelTurn ? marvelEngineRef.current : dcEngineRef.current;
+    const playerName = isMarvelTurn ? 'Marvel' : 'DC';
     
     console.log(`Requesting move from ${playerName}, isGameActive: ${isGameActive}`);
     
@@ -241,10 +241,10 @@ const ChessArena = () => {
     setGamePosition(newGame.fen());
     setIsGameActive(true);
     setGameStatus('Game in progress...');
-    setCurrentPlayer('White');
+    setCurrentPlayer('Marvel');
     setMoveHistory([]);
     
-    // Start with white's move
+    // Start with Marvel's move
     setTimeout(() => {
       requestEngineMove();
     }, 1000);

@@ -9,14 +9,59 @@ const SimpleChessArena = () => {
   const [moveCount, setMoveCount] = useState(0);
   const [isGameActive, setIsGameActive] = useState(false);
   const [gameStatus, setGameStatus] = useState('Ready to start');
-  const [capturedWhite, setCapturedWhite] = useState([]); // black captured white pieces
-  const [capturedBlack, setCapturedBlack] = useState([]); // white captured black pieces
+  const [capturedMarvel, setCapturedMarvel] = useState([]); // DC captured Marvel pieces
+  const [capturedDC, setCapturedDC] = useState([]); // Marvel captured DC pieces
   const [showWinnerPopup, setShowWinnerPopup] = useState(false);
   const [winnerInfo, setWinnerInfo] = useState({ winner: '', reason: '', isDraw: false });
+  const [commentary, setCommentary] = useState([
+    { 
+      id: 1, 
+      player: 'system', 
+              message: 'Welcome to Duh! Chess! Marvel vs DC battle begins...', 
+      timestamp: Date.now() 
+    }
+  ]);
   
   const gameRef = useRef(game);
   const timeoutRef = useRef(null);
   const shouldContinueRef = useRef(false);
+  const commentaryRef = useRef(null);
+
+  // Helper function to get piece name with SVG
+  const getPieceName = (piece) => {
+    const pieceNames = {
+      'K': 'King', 'Q': 'Queen', 'R': 'Rook', 'B': 'Bishop', 'N': 'Knight', 'P': 'Pawn',
+      'k': 'King', 'q': 'Queen', 'r': 'Rook', 'b': 'Bishop', 'n': 'Knight', 'p': 'Pawn'
+    };
+    const color = piece === piece.toUpperCase() ? 'white' : 'black';
+    const team = piece === piece.toUpperCase() ? 'Marvel' : 'DC';
+    const pieceName = pieceNames[piece.toUpperCase()];
+    const svgPath = `/images/pieces/${color}-${pieceName.toLowerCase()}.svg`;
+    
+    return { name: pieceName, color, team, svgPath, piece };
+  };
+
+  // Helper function to convert square notation (like 'e4') to readable position
+  const getSquareName = (square) => {
+    return square.toUpperCase();
+  };
+
+  // Add commentary message
+  const addCommentary = (player, message) => {
+    setCommentary(prev => [...prev, {
+      id: Date.now(),
+      player,
+      message,
+      timestamp: Date.now()
+    }]);
+    
+    // Auto-scroll to bottom
+    setTimeout(() => {
+      if (commentaryRef.current) {
+        commentaryRef.current.scrollTop = commentaryRef.current.scrollHeight;
+      }
+    }, 100);
+  };
 
   // Update game ref when game state changes
   useEffect(() => {
@@ -75,18 +120,52 @@ const SimpleChessArena = () => {
       console.log('Move result:', moveResult);
       
       if (moveResult) {
-        // Track captured pieces to display on the right side
+        // Create commentary for the move
+        const movingPiece = getPieceName(moveResult.piece);
+        const playerName = moveResult.color === 'w' ? 'Marvel' : 'DC';
+        const fromSquare = getSquareName(moveResult.from);
+        const toSquare = getSquareName(moveResult.to);
+        
+        let commentaryMessage = '';
+        
         if (moveResult.captured) {
+          const capturedPiece = getPieceName(moveResult.captured);
+          commentaryMessage = `${movingPiece.name} from ${fromSquare} captures ${capturedPiece.name} on ${toSquare}! 💥`;
+          
+          // Track captured pieces to display on the right side
           const capturedCode = moveResult.captured; // p,r,n,b,q,k (lowercase from chess.js)
           if (moveResult.color === 'w') {
-            // white moved; captured black piece
-            setCapturedBlack(prev => [...prev, capturedCode]);
+            // Marvel moved; captured DC piece
+            setCapturedDC(prev => [...prev, capturedCode]);
           } else {
-            setCapturedWhite(prev => [...prev, capturedCode.toUpperCase()]);
+            setCapturedMarvel(prev => [...prev, capturedCode.toUpperCase()]);
+          }
+        } else {
+          commentaryMessage = `${movingPiece.name} moves from ${fromSquare} to ${toSquare}`;
+          
+          // Add special move annotations
+          if (moveResult.flags.includes('k') || moveResult.flags.includes('q')) {
+            commentaryMessage += ' (Castling!) 🏰';
+          } else if (moveResult.flags.includes('e')) {
+            commentaryMessage += ' (En passant!) ⚡';
+          } else if (moveResult.promotion) {
+            commentaryMessage += ` (Promoted to ${getPieceName(moveResult.promotion).name}!) 👑`;
           }
         }
+        
+        // Add check/checkmate indicators
+        if (newGame.inCheck()) {
+          if (newGame.isCheckmate()) {
+            commentaryMessage += ' CHECKMATE! 🎯';
+          } else {
+            commentaryMessage += ' Check! ⚠️';
+          }
+        }
+        
+        addCommentary(playerName.toLowerCase() === 'marvel' ? 'marvel' : 'dc', commentaryMessage);
+        
         const newPosition = newGame.fen();
-        const currentTurn = newGame.turn() === 'w' ? 'White' : 'Black';
+        const currentTurn = newGame.turn() === 'w' ? 'Marvel' : 'DC';
         
         console.log('Move successful! Updating state...');
         console.log('New position:', newPosition);
@@ -111,7 +190,7 @@ const SimpleChessArena = () => {
           let isDraw = false;
           
           if (newGame.isCheckmate()) {
-            winner = newGame.turn() === 'w' ? 'Black' : 'White';
+            winner = newGame.turn() === 'w' ? 'DC' : 'Marvel';
             reason = 'Checkmate';
             endStatus += `${winner} wins by checkmate!`;
           } else if (newGame.isDraw()) {
@@ -189,6 +268,7 @@ const SimpleChessArena = () => {
     setIsGameActive(true);
     shouldContinueRef.current = true; // Enable game continuation
     setGameStatus('Game starting...');
+    addCommentary('system', 'Game started! Marvel (You) moves first. Good luck! 🚀');
     
     // Start the first move after a short delay
     timeoutRef.current = setTimeout(() => {
@@ -227,10 +307,18 @@ const SimpleChessArena = () => {
     setMoveCount(0);
     setBoardKey(prev => prev + 1);
     setGameStatus('Ready to start');
-    setCapturedWhite([]);
-    setCapturedBlack([]);
+    setCapturedMarvel([]);
+    setCapturedDC([]);
     setShowWinnerPopup(false);
     setWinnerInfo({ winner: '', reason: '', isDraw: false });
+    setCommentary([
+      { 
+        id: 1, 
+        player: 'system', 
+        message: 'New game started! Marvel vs DC battle begins...', 
+        timestamp: Date.now() 
+      }
+    ]);
     
     console.log('Reset to starting position:', startPosition);
   };
@@ -243,9 +331,9 @@ const SimpleChessArena = () => {
 
   console.log('SimpleChessArena rendering, position:', gamePosition);
 
-  // Calculate board size based on screen dimensions (larger without right sidebar)
+  // Calculate board size based on screen dimensions (accounting for both sidebars)
   const getOptimalBoardSize = () => {
-    const availableWidth = window.innerWidth - 320; // Subtract left sidebar width
+    const availableWidth = window.innerWidth - 320 - 380; // Subtract left sidebar (320px) and right sidebar (380px) width
     const availableHeight = window.innerHeight - 40; // Subtract padding
     const minDimension = Math.min(availableWidth * 0.85, availableHeight * 0.9);
     return Math.max(500, Math.min(800, minDimension));
@@ -335,7 +423,7 @@ const SimpleChessArena = () => {
             fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
             fontWeight: '400'
           }}>
-            <p><strong>Turn:</strong> {game.turn() === 'w' ? '⚪ White' : '⚫ Black'}</p>
+                                    <p><strong>Turn:</strong> {game.turn() === 'w' ? '🦸‍♂️ Marvel' : '🦹‍♂️ DC'}</p>
             <p><strong>Move:</strong> #{moveCount}</p>
             <p><strong>Available:</strong> {game.moves().length} moves</p>
           </div>
@@ -523,41 +611,156 @@ const SimpleChessArena = () => {
         </div>
       </div>
 
-      {/* Right Sidebar - Captured pieces */}
+      {/* Right Sidebar - Captured pieces and Commentary */}
       <div style={{
-        width: '260px',
-        padding: '20px',
+        width: '380px',
+        minWidth: '380px',
         borderLeft: '3px solid #444',
         background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #2a2a2a 100%)',
         display: 'flex',
         flexDirection: 'column',
-        gap: '16px'
+        overflow: 'hidden'
       }}>
-        <div>
-          <h3 style={{margin: 0, marginBottom: '8px'}}>Captured by White</h3>
-          <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-            {capturedBlack.map((p, idx) => (
-              <div key={`cb-${idx}`} style={{
-                width: '32px', height: '32px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: '#111', border: '1px solid #333', borderRadius: '6px'
-              }}>
-                <span style={{fontSize: '22px'}}>{p === 'p' ? '♟' : p === 'r' ? '♜' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'q' ? '♛' : '♚'}</span>
-              </div>
-            ))}
+        {/* Captured Pieces Section */}
+        <div style={{
+          padding: '20px',
+          borderBottom: '2px solid #444',
+          flexShrink: 0
+        }}>
+          <h3 style={{
+            margin: '0 0 12px 0',
+            color: '#FFD700',
+            fontSize: '1.2em',
+            fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+            fontWeight: '600'
+          }}>
+            Captured Pieces
+          </h3>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <h4 style={{
+              margin: '0 0 8px 0',
+              color: '#cccccc',
+              fontSize: '0.9em',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              fontWeight: '500'
+            }}>
+              By Marvel (You)
+            </h4>
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px'}}>
+              {capturedDC.map((p, idx) => (
+                <div key={`cb-${idx}`} style={{
+                  width: '28px', height: '28px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
+                  border: '1px solid #444',
+                  borderRadius: '6px',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                }}>
+                  <span style={{fontSize: '18px'}}>{p === 'p' ? '♟' : p === 'r' ? '♜' : p === 'n' ? '♞' : p === 'b' ? '♝' : p === 'q' ? '♛' : '♚'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h4 style={{
+              margin: '0 0 8px 0',
+              color: '#cccccc',
+              fontSize: '0.9em',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              fontWeight: '500'
+            }}>
+              By DC (Opponent)
+            </h4>
+            <div style={{display: 'flex', flexWrap: 'wrap', gap: '6px'}}>
+              {capturedMarvel.map((p, idx) => (
+                <div key={`cw-${idx}`} style={{
+                  width: '28px', height: '28px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%)',
+                  border: '1px solid #444',
+                  borderRadius: '6px',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+                }}>
+                  <span style={{fontSize: '18px', color: '#fff'}}>{p === 'P' ? '♙' : p === 'R' ? '♖' : p === 'N' ? '♘' : p === 'B' ? '♗' : p === 'Q' ? '♕' : '♔'}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div>
-          <h3 style={{margin: 0, marginBottom: '8px'}}>Captured by Black</h3>
-          <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
-            {capturedWhite.map((p, idx) => (
-              <div key={`cw-${idx}`} style={{
-                width: '32px', height: '32px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: '#111', border: '1px solid #333', borderRadius: '6px'
+        {/* Commentary Section */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            padding: '16px 20px 12px 20px',
+            borderBottom: '1px solid #333',
+            flexShrink: 0
+          }}>
+            <h3 style={{
+              margin: 0,
+              color: '#FFD700',
+              fontSize: '1.2em',
+              fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+              fontWeight: '600'
+            }}>
+              Live Commentary 💬
+            </h3>
+          </div>
+          
+          <div 
+            ref={commentaryRef}
+            style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '12px 20px 20px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+            {commentary.map((comment) => (
+              <div key={comment.id} style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: comment.player === 'marvel' ? 'flex-end' : 'flex-start',
+                gap: '4px'
               }}>
-                <span style={{fontSize: '22px', color: '#fff'}}>{p === 'P' ? '♙' : p === 'R' ? '♖' : p === 'N' ? '♘' : p === 'B' ? '♗' : p === 'Q' ? '♕' : '♔'}</span>
+                <div style={{
+                  maxWidth: '90%',
+                  padding: '10px 14px',
+                  borderRadius: comment.player === 'marvel' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  background: comment.player === 'system' 
+                    ? 'linear-gradient(135deg, #4a5568 0%, #2d3748 100%)'
+                    : comment.player === 'marvel'
+                      ? 'linear-gradient(135deg, #E53E3E 0%, #C53030 100%)'
+                      : 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  lineHeight: '1.4',
+                  fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+                  fontWeight: '400',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                  border: comment.player === 'system' ? '1px solid #666' : 'none',
+                  wordWrap: 'break-word'
+                }}>
+                  {comment.message}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: '#888',
+                  fontFamily: '"Clash Display Variable", "Clash Display", sans-serif',
+                  fontWeight: '300',
+                  alignSelf: comment.player === 'marvel' ? 'flex-end' : 'flex-start',
+                  marginRight: comment.player === 'marvel' ? '8px' : '0',
+                  marginLeft: comment.player !== 'marvel' ? '8px' : '0'
+                }}>
+                  {comment.player === 'system' ? 'System' : comment.player === 'marvel' ? 'You (Marvel)' : 'Opponent (DC)'}
+                </div>
               </div>
             ))}
           </div>
@@ -582,14 +785,10 @@ const SimpleChessArena = () => {
           <div style={{
             background: winnerInfo.isDraw 
               ? 'linear-gradient(135deg, #4a5568 0%, #2d3748 50%, #1a202c 100%)'
-              : winnerInfo.winner === 'White'
-                ? 'linear-gradient(135deg, #f7fafc 0%, #edf2f7 50%, #e2e8f0 100%)'
-                : 'linear-gradient(135deg, #2d3748 0%, #1a202c 50%, #000000 100%)',
-            color: winnerInfo.isDraw 
-              ? '#ffffff'
-              : winnerInfo.winner === 'White'
-                ? '#000000'
-                : '#ffffff',
+              : winnerInfo.winner === 'Marvel'
+                ? 'linear-gradient(135deg, #E53E3E 0%, #C53030 50%, #9B2C2C 100%)'
+                : 'linear-gradient(135deg, #2B6CB0 0%, #2C5282 50%, #2A4365 100%)',
+            color: '#ffffff',
             padding: '60px 80px',
             borderRadius: '24px',
             textAlign: 'center',
@@ -600,9 +799,9 @@ const SimpleChessArena = () => {
             overflow: 'hidden',
             border: winnerInfo.isDraw 
               ? '2px solid #718096'
-              : winnerInfo.winner === 'White'
-                ? '2px solid #000000'
-                : '2px solid #ffffff'
+              : winnerInfo.winner === 'Marvel'
+                ? '2px solid #E53E3E'
+                : '2px solid #2B6CB0'
           }}>
             {/* Confetti animation background */}
             {!winnerInfo.isDraw && (
@@ -613,9 +812,9 @@ const SimpleChessArena = () => {
                 right: '-50%',
                 bottom: '-100%',
                 background: `
-                  radial-gradient(circle at 20% 80%, ${winnerInfo.winner === 'White' ? '#FFD700' : '#C0C0C0'} 2px, transparent 2px),
-                  radial-gradient(circle at 80% 20%, ${winnerInfo.winner === 'White' ? '#FFA500' : '#708090'} 2px, transparent 2px),
-                  radial-gradient(circle at 40% 40%, ${winnerInfo.winner === 'White' ? '#FF6347' : '#4682B4'} 2px, transparent 2px)
+                  radial-gradient(circle at 20% 80%, ${winnerInfo.winner === 'Marvel' ? '#E53E3E' : '#2B6CB0'} 2px, transparent 2px),
+                  radial-gradient(circle at 80% 20%, ${winnerInfo.winner === 'Marvel' ? '#DC143C' : '#4682B4'} 2px, transparent 2px),
+                  radial-gradient(circle at 40% 40%, ${winnerInfo.winner === 'Marvel' ? '#B91C1C' : '#1E40AF'} 2px, transparent 2px)
                 `,
                 backgroundSize: '50px 50px, 30px 30px, 40px 40px',
                 animation: 'confetti 2s linear infinite',
@@ -631,9 +830,9 @@ const SimpleChessArena = () => {
             }}>
               {winnerInfo.isDraw 
                 ? '🤝' 
-                : winnerInfo.winner === 'White' 
-                  ? '👑'
-                  : '♛'
+                : winnerInfo.winner === 'Marvel' 
+                  ? '🦸‍♂️'
+                  : '🦹‍♂️'
               }
             </div>
             
@@ -644,9 +843,7 @@ const SimpleChessArena = () => {
               fontWeight: '700',
               textShadow: winnerInfo.isDraw 
                 ? '2px 2px 4px rgba(0, 0, 0, 0.5)'
-                : winnerInfo.winner === 'White'
-                  ? '2px 2px 4px rgba(0, 0, 0, 0.3)'
-                  : '2px 2px 4px rgba(255, 255, 255, 0.3)',
+                : '2px 2px 4px rgba(0, 0, 0, 0.3)',
               animation: 'glow 2s ease-in-out infinite alternate'
             }}>
               {winnerInfo.isDraw ? 'DRAW!' : `${winnerInfo.winner.toUpperCase()} WINS!`}
