@@ -203,111 +203,234 @@ const SimpleChessArena = () => {
 
   console.log('SimpleChessArena rendering, position:', gamePosition);
 
+  // Calculate board size based on screen dimensions
+  const getOptimalBoardSize = () => {
+    const minDimension = Math.min(window.innerWidth * 0.6, window.innerHeight * 0.9);
+    return Math.max(400, Math.min(700, minDimension));
+  };
+
+  const boardSize = getOptimalBoardSize();
+
   return (
     <div style={{
       height: '100vh',
+      width: '100vw',
       display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
       backgroundColor: '#2a2a2a',
       color: '#fff',
-      padding: '20px'
+      overflow: 'hidden'
     }}>
-      <h1>Duh! Chess - AI vs AI</h1>
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <h2 style={{ color: '#4CAF50', marginBottom: '10px' }}>{gameStatus}</h2>
-        <p>Turn: {game.turn() === 'w' ? 'White' : 'Black'}</p>
-        <p>Move Count: {moveCount}</p>
-        {game.isGameOver() && (
-          <p style={{ color: '#ff6b6b', fontWeight: 'bold' }}>
-            {game.isCheckmate() ? 'Checkmate!' : 
-             game.isDraw() ? 'Draw!' : 
-             game.isStalemate() ? 'Stalemate!' : 'Game Over'}
-          </p>
-        )}
-      </div>
-      
+      {/* Left Sidebar */}
       <div style={{
-        width: '500px',
-        height: '500px',
-        margin: '20px',
-        border: '2px solid #555',
-        borderRadius: '8px',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)'
+        width: '300px',
+        padding: '30px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)',
+        borderRight: '2px solid #444'
       }}>
-        <CustomChessBoard
-          position={gamePosition}
-          boardWidth={500}
-          key={boardKey}
-        />
+        <h1 style={{ 
+          fontSize: '2.5em', 
+          marginBottom: '30px', 
+          textAlign: 'center',
+          background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          Duh! Chess
+        </h1>
+        
+        <div style={{ 
+          textAlign: 'center', 
+          marginBottom: '40px',
+          padding: '20px',
+          backgroundColor: '#333',
+          borderRadius: '12px',
+          border: '1px solid #555',
+          width: '100%'
+        }}>
+          <h2 style={{ 
+            color: '#4CAF50', 
+            marginBottom: '15px',
+            fontSize: '1.4em'
+          }}>
+            {gameStatus}
+          </h2>
+          <div style={{ fontSize: '1.1em', lineHeight: '1.6' }}>
+            <p><strong>Turn:</strong> {game.turn() === 'w' ? '⚪ White' : '⚫ Black'}</p>
+            <p><strong>Move:</strong> #{moveCount}</p>
+            <p><strong>Available:</strong> {game.moves().length} moves</p>
+          </div>
+          {game.isGameOver() && (
+            <div style={{ 
+              marginTop: '15px',
+              padding: '10px',
+              backgroundColor: '#ff6b6b',
+              borderRadius: '6px',
+              color: 'white',
+              fontWeight: 'bold'
+            }}>
+              {game.isCheckmate() ? '👑 Checkmate!' : 
+               game.isDraw() ? '🤝 Draw!' : 
+               game.isStalemate() ? '🔒 Stalemate!' : '🏁 Game Over'}
+            </div>
+          )}
+        </div>
+        
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '15px',
+          width: '100%'
+        }}>
+          <button 
+            onClick={startGame}
+            disabled={isGameActive || game.isGameOver()}
+            style={{
+              padding: '15px 20px',
+              fontSize: '18px',
+              backgroundColor: isGameActive || game.isGameOver() ? '#666' : '#4CAF50',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: isGameActive || game.isGameOver() ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+              width: '100%'
+            }}
+          >
+            {isGameActive ? '⚡ Game Running...' : '🚀 Start Game'}
+          </button>
+          
+          <button 
+            onClick={stopGame}
+            disabled={!isGameActive}
+            style={{
+              padding: '15px 20px',
+              fontSize: '18px',
+              backgroundColor: !isGameActive ? '#666' : '#f44336',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: !isGameActive ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+              width: '100%'
+            }}
+          >
+            ⏹️ Stop Game
+          </button>
+          
+          <button 
+            onClick={resetGame}
+            style={{
+              padding: '15px 20px',
+              fontSize: '18px',
+              backgroundColor: '#2196F3',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+              width: '100%'
+            }}
+          >
+            🔄 Reset Game
+          </button>
+        </div>
+      </div>
+
+      {/* Center - Chessboard */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '20px'
+      }}>
+        <div style={{
+          width: `${boardSize}px`,
+          height: `${boardSize}px`,
+          border: '3px solid #8b4513',
+          borderRadius: '12px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+          background: 'linear-gradient(135deg, #8b4513 0%, #a0522d 100%)',
+          padding: '8px'
+        }}>
+          <CustomChessBoard
+            position={gamePosition}
+            boardWidth={boardSize - 16}
+            key={boardKey}
+          />
+        </div>
       </div>
       
-      <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
-        <button 
-          onClick={startGame}
-          disabled={isGameActive || game.isGameOver()}
-          style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            backgroundColor: isGameActive || game.isGameOver() ? '#666' : '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: isGameActive || game.isGameOver() ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold',
-            transition: 'background-color 0.3s ease'
-          }}
-        >
-          {isGameActive ? 'Game Running...' : 'Start Game'}
-        </button>
-        
-        <button 
-          onClick={stopGame}
-          disabled={!isGameActive}
-          style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            backgroundColor: !isGameActive ? '#666' : '#f44336',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: !isGameActive ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold',
-            transition: 'background-color 0.3s ease'
-          }}
-        >
-          Stop Game
-        </button>
-        
-        <button 
-          onClick={resetGame}
-          style={{
-            padding: '12px 24px',
-            fontSize: '16px',
-            backgroundColor: '#2196F3',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            transition: 'background-color 0.3s ease'
-          }}
-        >
-          Reset Game
-        </button>
-      </div>
-      
-      <div style={{ 
-        marginTop: '20px', 
-        textAlign: 'center', 
-        fontSize: '14px', 
-        color: '#ccc',
-        maxWidth: '600px'
+      {/* Right Sidebar */}
+      <div style={{
+        width: '300px',
+        padding: '30px 20px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(225deg, #1a1a1a 0%, #2a2a2a 100%)',
+        borderLeft: '2px solid #444'
       }}>
-        <p>✨ AI vs AI Chess Game ✨</p>
-        <p>Press "Start Game" to watch two AI players battle it out!</p>
-        <p>Each move takes 1.5 seconds with smooth animations.</p>
+        <div style={{
+          textAlign: 'center',
+          padding: '20px',
+          backgroundColor: '#333',
+          borderRadius: '12px',
+          border: '1px solid #555',
+          width: '100%',
+          marginBottom: '30px'
+        }}>
+          <h3 style={{ 
+            color: '#FFD700', 
+            marginBottom: '20px',
+            fontSize: '1.3em'
+          }}>
+            ✨ Game Info
+          </h3>
+          <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#ccc' }}>
+            <p>🤖 <strong>AI vs AI</strong> Chess Battle</p>
+            <p>⏱️ <strong>1.5s</strong> per move animation</p>
+            <p>🎯 <strong>Automatic</strong> gameplay</p>
+            <p>🎨 <strong>Smooth</strong> piece transitions</p>
+          </div>
+        </div>
+
+        <div style={{
+          textAlign: 'center',
+          padding: '20px',
+          backgroundColor: '#333',
+          borderRadius: '12px',
+          border: '1px solid #555',
+          width: '100%'
+        }}>
+          <h3 style={{ 
+            color: '#FF6B6B', 
+            marginBottom: '15px',
+            fontSize: '1.2em'
+          }}>
+            🎮 Controls
+          </h3>
+          <div style={{ fontSize: '13px', lineHeight: '1.6', color: '#ddd' }}>
+            <p><strong>Start:</strong> Begin AI battle</p>
+            <p><strong>Stop:</strong> Pause the game</p>
+            <p><strong>Reset:</strong> New game setup</p>
+            <p style={{ marginTop: '15px', color: '#4CAF50' }}>
+              Sit back and enjoy the show! 🍿
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
