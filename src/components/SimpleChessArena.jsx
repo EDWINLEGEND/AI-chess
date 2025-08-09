@@ -27,19 +27,83 @@ const SimpleChessArena = () => {
   const shouldContinueRef = useRef(false);
   const commentaryRef = useRef(null);
 
-  // Helper function to get piece name with SVG using starting position
+  // State to track piece identities throughout the game
+  const [pieceTracker, setPieceTracker] = useState(() => {
+    // Initialize piece tracker with starting positions
+    const tracker = {};
+    
+    // Marvel pieces (white) - correct starting positions
+    tracker['Ke1'] = { piece: 'K', identity: { svg: 'ironman.svg', name: 'Iron Man' } };
+    tracker['Qd1'] = { piece: 'Q', identity: { svg: 'wanda.svg', name: 'Scarlet Witch' } };
+    tracker['Ra1'] = { piece: 'R', identity: { svg: 'thor.svg', name: 'Thor' } };
+    tracker['Rh1'] = { piece: 'R', identity: { svg: 'capmarvel.svg', name: 'Captain Marvel' } };
+    tracker['Bc1'] = { piece: 'B', identity: { svg: 'strange.svg', name: 'Doctor Strange' } };
+    tracker['Bf1'] = { piece: 'B', identity: { svg: 'vision.svg', name: 'Vision' } };
+    tracker['Nb1'] = { piece: 'N', identity: { svg: 'blackp.svg', name: 'Black Panther' } };
+    tracker['Ng1'] = { piece: 'N', identity: { svg: 'spiderman.svg', name: 'Spider-Man' } };
+    
+    // Marvel pawns
+    const marvelPawns = ['Hawkeye', 'Black Widow', 'Falcon', 'Ant-Man', 'War Machine', 'Winter Soldier', 'Wasp', 'Star-Lord'];
+    const marvelPawnSvgs = ['hawkeye.svg', 'blackwidow.svg', 'falcon.svg', 'antman.svg', 'warmachine.svg', 'wintersol.svg', 'wasp.svg', 'starlord.svg'];
+    
+    for (let i = 0; i < 8; i++) {
+      const file = String.fromCharCode(97 + i); // a, b, c, etc.
+      tracker[`P${file}2`] = { piece: 'P', identity: { svg: marvelPawnSvgs[i], name: marvelPawns[i] } };
+    }
+    
+    // DC pieces (black)
+    tracker['ke8'] = { piece: 'k', identity: { svg: 'superman.svg', name: 'Superman' } };
+    tracker['qd8'] = { piece: 'q', identity: { svg: 'wonder.svg', name: 'Wonder Woman' } };
+    tracker['ra8'] = { piece: 'r', identity: { svg: 'green.svg', name: 'Green Lantern' } };
+    tracker['rh8'] = { piece: 'r', identity: { svg: 'shazam.svg', name: 'Shazam' } };
+    tracker['bc8'] = { piece: 'b', identity: { svg: 'martian.svg', name: 'Martian Manhunter' } };
+    tracker['bf8'] = { piece: 'b', identity: { svg: 'cyborg.svg', name: 'Cyborg' } };
+    tracker['nb8'] = { piece: 'n', identity: { svg: 'flash.svg', name: 'The Flash' } };
+    tracker['ng8'] = { piece: 'n', identity: { svg: 'batman.svg', name: 'Batman' } };
+    
+    // DC pawns
+    const dcPawns = ['Batgirl', 'Robin', 'Hawkman', 'Zatanna', 'Blue Beetle', 'Green Arrow', 'Black Canary', 'Plastic Man'];
+    const dcPawnSvgs = ['batman.svg', 'Robin.svg', 'hawkman.svg', 'zatanna.svg', 'blue.svg', 'arrow.svg', 'blackcanary.svg', 'plastic man.svg'];
+    
+    for (let i = 0; i < 8; i++) {
+      const file = String.fromCharCode(97 + i); // a, b, c, etc.
+      tracker[`p${file}7`] = { piece: 'p', identity: { svg: dcPawnSvgs[i], name: dcPawns[i] } };
+    }
+    
+    return tracker;
+  });
+
+  // Helper function to get piece identity from tracker
+  const getPieceIdentityFromTracker = (piece, fromSquare) => {
+    // Try to find the piece in our tracker
+    const key = `${piece}${fromSquare}`;
+    if (pieceTracker[key]) {
+      return pieceTracker[key].identity;
+    }
+    
+    // Fallback: search for any piece of this type
+    for (const [trackerKey, trackerValue] of Object.entries(pieceTracker)) {
+      if (trackerValue.piece === piece) {
+        return trackerValue.identity;
+      }
+    }
+    
+    // Final fallback
+    return { svg: 'default.svg', name: `Unknown ${piece}` };
+  };
+
+  // Helper function to get piece name with SVG using tracker
   const getPieceName = (piece, fromSquare = null) => {
     const isMarvel = piece === piece.toUpperCase();
     const team = isMarvel ? 'Marvel' : 'DC';
     
-    // Convert chess square notation (like 'e1') to row/col for identity lookup
-    let col = 0;
+    let identity;
     if (fromSquare) {
-      col = fromSquare.charCodeAt(0) - 97; // 'a' = 0, 'b' = 1, etc.
+      identity = getPieceIdentityFromTracker(piece, fromSquare);
+    } else {
+      // Fallback to old method
+      identity = getPieceIdentity(piece, 0, 0);
     }
-    
-    // Get the specific identity for this piece
-    const identity = getPieceIdentity(piece, 0, col);
     
     return { 
       name: identity.name, 
@@ -140,10 +204,10 @@ const SimpleChessArena = () => {
           const capturedPiece = getPieceName(moveResult.captured, moveResult.to);
           commentaryMessage = `${movingPiece.name} from ${fromSquare} captures ${capturedPiece.name} on ${toSquare}! 💥`;
           
-          // Track captured pieces with their identity information
+          // Track captured pieces with their identity information from tracker
           const capturedPieceInfo = {
             piece: moveResult.captured,
-            identity: getPieceIdentity(moveResult.captured, 0, moveResult.to.charCodeAt(0) - 97)
+            identity: getPieceIdentityFromTracker(moveResult.captured, moveResult.to)
           };
           
           if (moveResult.color === 'w') {
@@ -164,6 +228,24 @@ const SimpleChessArena = () => {
             commentaryMessage += ` (Promoted to ${getPieceName(moveResult.promotion, moveResult.to).name}!) 👑`;
           }
         }
+        
+        // Update piece tracker when pieces move
+        setPieceTracker(prevTracker => {
+          const newTracker = { ...prevTracker };
+          
+          // Remove piece from old position
+          const fromKey = `${moveResult.piece}${moveResult.from}`;
+          if (newTracker[fromKey]) {
+            const pieceInfo = newTracker[fromKey];
+            delete newTracker[fromKey];
+            
+            // Add piece to new position
+            const toKey = `${moveResult.piece}${moveResult.to}`;
+            newTracker[toKey] = pieceInfo;
+          }
+          
+          return newTracker;
+        });
         
         // Add check/checkmate indicators
         if (newGame.inCheck()) {
