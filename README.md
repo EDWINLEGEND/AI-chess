@@ -13,13 +13,13 @@
 - Member 2: Gautham Madhav - Christ College of Engineering 
 
 ### Project Description
-A superhero-themed AI vs AI chess game featuring Marvel and DC characters with custom visuals, smooth animations, and live commentary. Watch Iron Man battle Superman while Thor takes on The Flash in an epic chess showdown!
+A chess game where YOU don't have to play! AI makes ALL the moves - even yours! Sit back, relax, and watch Marvel vs DC superheroes play chess while you literally do nothing. **"Eat 5 star. Do nothing."**
 
 ### The Problem (that doesn't exist)
-Regular chess is boring! Who wants to see generic pieces when you could watch superheroes duke it out on a chessboard? Also, humans are too slow and make mistakes - we need AI vs AI battles for maximum entertainment value.
+Everyone plays chess against AI, but that still requires YOU to think and make moves! Why should humans be burdened with the exhausting task of playing their own game? The stress of decision-making in chess is clearly the biggest problem facing gamers today.
 
 ### The Solution (that nobody asked for)
-We created an AI vs AI chess arena where Marvel Avengers fight against DC Justice League members, complete with character-specific pieces, smooth animations, live commentary, and captured piece displays. Because apparently the world needed to know who would win: Doctor Strange or Martian Manhunter?
+We eliminated the most annoying part of chess - YOUR participation! Our revolutionary AI vs AI system makes moves for BOTH players, so you can experience chess without the burden of actually playing. We made it Marvel vs DC themed with live commentary to make watching your own uselessness entertaining!
 
 ## Technical Details
 ### Technologies/Components Used
@@ -50,7 +50,7 @@ npm install
 ```bash
 npm run dev
 ```
-Then open your browser and navigate to `http://localhost:5173` to start watching the superhero chess battle!
+Then open your browser and navigate to `http://localhost:5173` to start doing absolutely nothing while watching the superhero chess battle!
 
 ### Project Documentation
 For Software:
@@ -83,9 +83,8 @@ Video demonstrates: Auto-playing chess game with Marvel vs DC characters, smooth
 - Animation demonstrations: Piece movement animations including knight L-shaped moves and linear movements
 
 ## Team Contributions
-- [Name 1]: Frontend development, React components, chess board implementation, piece animations
-- [Name 2]: Character design system, SVG assets creation, Marvel vs DC piece mapping, UI/UX design
-- [Name 3]: Game logic integration, AI implementation, commentary system, move tracking and piece identity management
+- Edwin Shaju Malakaran: Frontend development, React components, chess board implementation, piece animations, making sure users can't interfere with the game
+- Gautham Madhav: Character design system, SVG assets creation, Marvel vs DC piece mapping, UI/UX design, commentary system to make uselessness entertaining
 
 ---
 Made with ❤ at TinkerHub Useless Projects 
