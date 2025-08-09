@@ -79,6 +79,169 @@ Visit `duhchess.vercel.app` to start doing absolutely nothing while watching the
 ### Project Documentation
 For Software:
 
+
+# Screenshots (Add at least 3)
+
+
+!https://drive.google.com/file/d/1u0MPTMoBHtkx68KZPgARyTjKXnFwpLRU/view?usp=sharing
+Before Game Begins, Gameplay
+
+!https://drive.google.com/file/d/1-IR-RtCijQqRr662EKuSYUrwbmSAW6Vb/view?usp=sharing
+During Game
+
+!https://drive.google.com/file/d/1shG_fGYKqTs_vKq_sDApZaHRHfQVhY82/view?usp=sharing
+During Game
+
+# Diagrams
+
+## Game Workflow - "The Ultimate Useless Experience"
+```mermaid
+graph TD
+    A["🎮 User Visits duhchess.vercel.app"] --> B["📱 Loading Screen Animation"]
+    B --> C["🎯 Single 'Start' Button<br/>(Only User Interaction Allowed)"]
+    C --> D["🤖 Initialize AI vs AI Game"]
+    D --> E["♟️ Marvel AI Makes Move"]
+    E --> F["🎬 1.5s Piece Animation"]
+    F --> G["💬 Live Commentary Update"]
+    G --> H["📊 Update Game State"]
+    H --> I["🦸‍♂️ DC AI Makes Move"]
+    I --> J["🎬 1.5s Piece Animation"]
+    J --> K["💬 Live Commentary Update"]
+    K --> L["📊 Update Game State"]
+    L --> M{"🏁 Game Over?"}
+    M -->|No| E
+    M -->|Yes| N["🎉 Winner Popup with Confetti"]
+    N --> O["🔄 User Can Reset & Do Nothing Again"]
+    
+    style A fill:#ff6b6b
+    style C fill:#4ecdc4
+    style E fill:#45b7d1
+    style I fill:#96ceb4
+    style N fill:#feca57
+```
+
+## Technical Architecture - "How We Eliminated Your Participation"
+```mermaid
+graph TB
+    subgraph "🎮 User Interface Layer"
+        A["App.jsx<br/>Loading Screen + Error Boundary"]
+        B["SimpleChessArena.jsx<br/>Main Game Controller<br/>(Prevents User Input)"]
+        C["CustomChessBoard.jsx<br/>Board Rendering + Animations"]
+    end
+    
+    subgraph "🤖 Game Logic Layer"
+        D["Chess.js Library<br/>Move Validation + Rules"]
+        E["Mock Stockfish Engine<br/>AI Move Generation"]
+        F["Piece Identity Tracker<br/>Character Persistence"]
+    end
+    
+    subgraph "🎨 Styling Layer"
+        G["Custom CSS Animations<br/>1.5s Piece Movements"]
+        H["Google Fonts<br/>Oswald + Clash Display"]
+        I["Responsive Design<br/>Dynamic Board Sizing"]
+    end
+    
+    subgraph "📦 Assets Layer"
+        J["32 Superhero SVGs<br/>Marvel vs DC Characters"]
+        K["Sound Effects<br/>(Optional)"]
+    end
+    
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+    B --> F
+    C --> G
+    C --> I
+    B --> H
+    C --> J
+    
+    style A fill:#ff9ff3
+    style B fill:#54a0ff
+    style C fill:#5f27cd
+    style D fill:#00d2d3
+    style E fill:#ff9f43
+    style F fill:#10ac84
+    style G fill:#ee5a6f
+    style H fill:#c7ecee
+    style I fill:#dda0dd
+    style J fill:#98d8c8
+    style K fill:#f7b731
+```
+
+## Character Battle Setup - "Marvel vs DC Showdown"
+```mermaid
+graph LR
+    subgraph "🦸‍♂️ Marvel Team (White Pieces)"
+        M1["👑 Iron Man<br/>(King)"]
+        M2["👸 Scarlet Witch<br/>(Queen)"]
+        M3["🏰 Thor<br/>(Rook)"]
+        M4["🏰 Captain Marvel<br/>(Rook)"]
+        M5["⛪ Doctor Strange<br/>(Bishop)"]
+        M6["⛪ Vision<br/>(Bishop)"]
+        M7["🐎 Black Panther<br/>(Knight)"]
+        M8["🐎 Spider-Man<br/>(Knight)"]
+        M9["♟️ 8 Avengers<br/>(Pawns)"]
+    end
+    
+    subgraph "🦸‍♀️ DC Team (Black Pieces)"
+        D1["👑 Superman<br/>(King)"]
+        D2["👸 Wonder Woman<br/>(Queen)"]
+        D3["🏰 Green Lantern<br/>(Rook)"]
+        D4["🏰 Shazam<br/>(Rook)"]
+        D5["⛪ Martian Manhunter<br/>(Bishop)"]
+        D6["⛪ Cyborg<br/>(Bishop)"]
+        D7["🐎 Flash<br/>(Knight)"]
+        D8["🐎 Batman<br/>(Knight)"]
+        D9["♟️ 8 Justice League<br/>(Pawns)"]
+    end
+    
+    subgraph "⚔️ Battle Arena"
+        BOARD["🏁 8x8 Chessboard<br/>AI vs AI Combat"]
+    end
+    
+    M1 --> BOARD
+    M2 --> BOARD
+    M3 --> BOARD
+    M4 --> BOARD
+    M5 --> BOARD
+    M6 --> BOARD
+    M7 --> BOARD
+    M8 --> BOARD
+    M9 --> BOARD
+    
+    D1 --> BOARD
+    D2 --> BOARD
+    D3 --> BOARD
+    D4 --> BOARD
+    D5 --> BOARD
+    D6 --> BOARD
+    D7 --> BOARD
+    D8 --> BOARD
+    D9 --> BOARD
+    
+    style M1 fill:#ff6b6b
+    style M2 fill:#ff6b6b
+    style M3 fill:#ff6b6b
+    style M4 fill:#ff6b6b
+    style M5 fill:#ff6b6b
+    style M6 fill:#ff6b6b
+    style M7 fill:#ff6b6b
+    style M8 fill:#ff6b6b
+    style M9 fill:#ff6b6b
+    
+    style D1 fill:#4ecdc4
+    style D2 fill:#4ecdc4
+    style D3 fill:#4ecdc4
+    style D4 fill:#4ecdc4
+    style D5 fill:#4ecdc4
+    style D6 fill:#4ecdc4
+    style D7 fill:#4ecdc4
+    style D8 fill:#4ecdc4
+    style D9 fill:#4ecdc4
+    
+    style BOARD fill:#ffe66d
+```
 # Key Features Breakdown
 
 **🎮 Game Interface:**
